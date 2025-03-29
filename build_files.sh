@@ -1,4 +1,5 @@
 echo "BUILD START"
+python -m pip install https://github.com/sachadee/Dlib/releases/download/v19.22.99/dlib-19.22.99-cp310-cp310-win_amd64.whl
 python -m pip install -r requirements.txt
 python -m manage.py makemigrations 
 python -m manage.py migrate
