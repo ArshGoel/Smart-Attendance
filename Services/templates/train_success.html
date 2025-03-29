@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Update The Dataset{% endblock page_title %}
+
+{% block body %}
+<h1>Training Complete!</h1>
+<p>NPZ file has been saved for user: {{ username }}</p>
+<p>File saved at: {{ output_file }}</p>
+<p>Training Accuracy: {{ accuracy|floatformat:2 }}%</p>
+<a href="{% url 'view_student' %}" class="btn btn-primary">Back to User List</a>
+{% endblock body %}

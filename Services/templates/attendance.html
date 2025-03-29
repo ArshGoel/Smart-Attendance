@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Teacher Dashboard{% endblock title %}
+
+{% block body %}
+{% block extra_css %}
+<style>
+    .bg-image{
+        filter: blur(8px);
+    -webkit-filter: blur(8px);
+    }
+</style> 
+{% endblock extra_css %}
+
+<div class="container bg-white p-4 rounded shadow" style="max-width: 1400px;">
+
+    <h1>Attendance Results for {{ date }}</h1>
+
+    <h2>Detected Faces:</h2>
+    <ul>
+        {% for name in recognized_students %}
+            <li>{{ name }}</li>
+        {% empty %}
+            <li>No faces detected.</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Images with Detected Faces:</h2>
+    {% for result in results %}
+        <div>
+            <img src="{{ result.image_path }}" alt="Processed Image">
+            <p>Detected Faces: {{ result.result|join:", " }}</p>
+        </div>
+    {% endfor %}
+
+    <form method="post" action="{% url 'save_attendance' %}">
+        {% csrf_token %}
+        <input type="hidden" name="date" value="{{ date }}">
+        <input type="hidden" id="detected_faces_input" name="detected_faces">
+        <button type="submit">Mark Attendance</button>
+    </form>
+    
+    <script>
+        // Assuming 'detected_faces' is available in JavaScript as a variable
+        var detectedFaces = {{ recognized_students|safe }};
+        document.getElementById('detected_faces_input').value = JSON.stringify(detectedFaces);
+    </script>
+    
+{% endblock body %}
+

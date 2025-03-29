@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Teacher Login | Signup{% endblock title %}
+{% block teacheractive %}active{% endblock teacheractive %}
+
+
+{% block body %}
+
+{% block extracss %}
+<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+    .bg-image{
+        filter: blur(8px);
+    -webkit-filter: blur(8px);
+    }
+</style>
+{% endblock extracss %}
+
+
+<div style="display: flex; justify-content: center; align-items: center; height: 85vh;">
+    <div class="wrapper">
+        <div class="title-text">
+            <div class="title login">
+                Teacher Login
+            </div>
+            <div class="title signup">
+                Teacher Signup
+            </div>
+        </div>
+        
+        <div class="form-container">
+            <div class="slide-controls">
+                <input type="radio" name="slide" id="login" checked="">
+                <input type="radio" name="slide" id="signup">
+                <label for="login" class="slide login">Login</label>
+                <label for="signup" class="slide signup">Register</label>
+                <div class="slider-tab"></div>
+            </div>
+
+            <div class="form-inner">
+                <form method="POST" class="login">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="login">
+                    <div class="field">
+                        <input type="text" name="username" value="" placeholder="Username" required="">
+                    </div>
+                    <div class="field">
+                        <input type="password" name="password" placeholder="Password" required="">
+                    </div>
+                    <div class="pass-link"><a href="#">Forgot password?</a></div>
+                    <div class="field btn">
+                        <div class="btn-layer"></div>
+                        <input type="submit" value="Login">
+                    </div>
+                    <div class="signup-link">Not a member? <a href="#">Signup now</a></div>
+                </form>
+
+                <form method="POST" class="signup">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="signup">
+                    <div class="field">
+                        <input type="text" name="username" placeholder="Username" required="">
+                    </div>
+                    <div class="field">
+                        <input type="text" name="email" placeholder="Email Address" required="">
+                    </div>
+                    <div class="field">
+                        <input type="password" name="password" placeholder="Password" required="">
+                    </div>
+                    <div class="field">
+                        <input type="password" name="confirm_password" placeholder="Confirm password" required="">
+                    </div>
+                    <div class="field btn">
+                        <div class="btn-layer"></div>
+                        <input type="submit" value="Signup">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{%static 'javascript/student.js'%}"></script>
+
+{%endblock body%}

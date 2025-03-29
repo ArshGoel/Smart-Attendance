@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Teacher Dashboard{% endblock title %}
+{% block dashboardactive %}active{% endblock dashboardactive %}
+
+{% block body %}
+    
+{% block extra_css %}
+<style>
+    .bg-image{
+        filter: blur(8px);
+    -webkit-filter: blur(8px);
+    }
+</style>
+{% endblock extra_css %} 
+
+<div class="container bg-white p-4 rounded shadow" style="max-width: 1400px;">
+
+<section class="content">
+    <div class="container-fluid">
+        <h1>Teacher Dashboard</h1>
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group mt-3">
+                <label for="date">Date</label>
+                <input type="date" id="date" name="date" class="form-control" required>
+            </div>
+            <div class="form-group mt-3">
+                <label for="images">Upload Images</label>
+                <input type="file" id="images" name="images" multiple class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Submit</button>
+            <!-- Additional button for video capture -->
+            <button type="button" class="btn btn-secondary mt-3" onclick="startVideoCapture()">Capture Live Video</button>
+        </form>
+        <!-- Additional content for teacher dashboard -->
+    </div>
+</section>
+
+<script>
+    {% comment %} function startVideoCapture() {
+        // Redirect to a view that asks for camera permissions and handles video capture
+        window.location.href = "{% url 'camera_page' %}"; // Assuming 'video_capture' is the URL name of the video capture view
+    } {% endcomment %}
+</script>
+{% endblock body %}

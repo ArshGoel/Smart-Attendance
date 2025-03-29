@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Live Capture{% endblock title %}
+{% block extra_css %}
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        height: 100vh;
+        background-color: #f4f4f4;
+    }
+    .left-panel {
+        width: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #000;
+    }
+    .right-panel {
+        width: 50%;
+        padding: 20px;
+        background-color: #fff;
+    }
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+{% endblock extra_css %}
+{% block body %}
+{% comment %} <div class="container-fluid">
+    <h1>Camera Feed</h1>
+    <div style="flex: 1;">
+    <img src="{% url 'video_feed' %}" alt="Live Camera Feed" >
+    </div>
+</div>
+<div style="flex: 1;">
+    <h1>Recognized Students</h1>
+    <ul id="recognized-names">
+        {% for name in recognized_names %}
+            <li>{{ name }}</li>
+        {% endfor %}
+    </ul>
+    <button id="clear-names-btn" class="btn btn-danger">Clear Recognized Names</button>
+</div> {% endcomment %}
+<div class="container-fluid">
+    <h1>Camera Feed</h1>
+    <div style="display: flex;">
+        <div style="flex: 1;">
+            <img src="{% url 'video_feed' %}" alt="Camera Feed" style="width: 100%;">
+        </div>
+        <div style="flex: 1;">
+            <h2>Recognized Names:</h2>
+    <ul id="recognized-names">
+            
+                {% for name in recognized_names %}
+                    <li>{{ name }}</li>
+                {% endfor %}
+            </ul>
+            <button id="clear-names-btn" class="btn btn-danger">Clear Recognized Names</button>
+            <button id="start-video-btn" class="btn btn-success">Start Video Capture</button> <!-- Start button -->
+            <button id="stop-video-btn" class="btn btn-warning">Stop Video Capture</button>  <!-- Stop button -->
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('start-video-btn').onclick = function() {
+        fetch("{% url 'start_video_capture' %}", {
+            method: "POST", // Use POST method to start video capture
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Video capture has been started.');
+            }
+        })
+        .catch(error => console.error('Error starting video capture:', error));
+    };
+    document.getElementById('stop-video-btn').onclick = function() {
+        fetch("{% url 'stop_video_capture' %}", {
+            method: "POST", // Use POST method to stop video capture
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Optionally you can display a message or disable the video feed
+                alert('Video capture has been stopped.');
+            }
+        })
+        .catch(error => console.error('Error stopping video capture:', error));
+    };
+    document.getElementById('clear-names-btn').onclick = function() {
+        fetch("{% url 'clear_recognized_names' %}", {
+            method: "POST", // Use POST method to clear names
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Clear the displayed names
+                document.getElementById('recognized-names-list').innerHTML = '';
+            }
+        })
+        .catch(error => console.error('Error clearing names:', error));
+    };
+    function fetchRecognizedNames() {
+        fetch("{% url 'get_recognized_names' %}")
+            .then(response => response.json())
+            .then(data => {
+                const namesList = document.getElementById('recognized-names');
+                namesList.innerHTML = '';  // Clear existing names
+                data.recognized_names.forEach(name => {
+                    const li = document.createElement('li');
+                    li.textContent = name;
+                    namesList.appendChild(li);
+                });
+            })
+            .catch(error => console.error('Error fetching recognized names:', error));
+    }
+
+    // Fetch recognized names every 2 seconds
+    setInterval(fetchRecognizedNames, 2000);
+</script>
+
+{% endblock body %}

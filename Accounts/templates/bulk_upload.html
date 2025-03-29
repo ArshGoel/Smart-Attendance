@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Preview Users{% endblock title %}
+{% block importactive %}active{% endblock importactive %}
+
+{% block body %}
+
+{% block extracss %}
+<style>
+    .bg-image{
+        filter: blur(8px);
+    -webkit-filter: blur(8px);
+    }
+    #search-box, #filter-gender, #filter-dept {
+        padding: 8px;
+    }
+    
+</style>
+{% endblock extracss %}
+
+<div class="container bg-white p-4 rounded shadow" style="max-width: 1400px;">
+    <h2 class="mb-3 text-center">Preview User Data</h2>
+    <div class="d-flex justify-content-between mb-3">
+        <input type="text" id="search-box" class="form-control w-25" placeholder="Search users...">
+        
+        <select id="filter-gender" class="form-control w-25">
+            <option value="">Filter by Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
+    
+        <select id="filter-dept" class="form-control w-25">
+            <option value="">Filter by Department</option>
+            <option value="CSE">CSE</option>
+            <option value="CSM">CSM</option>
+            <option value="ECE">ECE</option>
+            <option value="IT">IT</option>
+            <option value="CSD">CSD</option>
+        </select>
+    </div>
+    
+    {% if users_data %}
+    <form id="user-form" action="{% url 'import_users' %}" method="post">
+        {% csrf_token %}
+        <div class="table-responsive">
+            <table class="table table-bordered border-dark">
+                <thead class="thead-light table-dark">
+                    <tr>
+                        <th><input type="checkbox" id="select-all"></th>
+                        <th id="username-header" style="cursor: pointer;">Username &#9650;</th>
+                        <th>Email</th>
+                        <th>Name</th>
+                        <th>Password</th>
+                        <th>Status</th>
+                        <th>Father Name</th>
+                        <th>Gender</th>
+                        <th>Data Of Birth</th>
+                        <th>Religion</th>
+                        <th>Admission Category</th>
+                        <th>Address</th>
+                        <th>Phone</th>
+                        <th>Category</th>
+                        <th>Mole</th>
+                        <th>DEPT</th>
+                        <th>Section</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users_data %}
+                    <tr {% if user.exists %} class="table-secondary" {% endif %}>
+                        <td>
+                            <input type="checkbox" name="selected_users" value="{{ user.username }}" class="user-checkbox"
+                                {% if user.exists %} disabled {% endif %}>
+
+                            <!-- Hidden fields to send user details -->
+                            <input type="hidden" name="usernames" value="{{ user.username }}">
+                            <input type="hidden" name="emails" value="{{ user.email }}">
+                            <input type="hidden" name="names" value="{{ user.name }}">
+                            <input type="hidden" name="passwords" value="{{ user.password }}">
+                            <input type="hidden" name="pictures" value="{{ user.picture }}">
+                            <input type="hidden" name="fathernames" value="{{ user.fathername }}">
+                            <input type="hidden" name="genders" value="{{ user.gender }}">
+                            <input type="hidden" name="dobs" value="{{ user.dob }}">
+                            <input type="hidden" name="religions" value="{{ user.religion }}">
+                            <input type="hidden" name="admitioncategories" value="{{ user.admitioncategory }}">
+                            <input type="hidden" name="addresses" value="{{ user.address }}">
+                            <input type="hidden" name="phones" value="{{ user.phone }}">
+                            <input type="hidden" name="categories" value="{{ user.category }}">
+                            <input type="hidden" name="moles" value="{{ user.mole }}">
+                            <input type="hidden" name="depts" value="{{ user.dept }}">
+                            <input type="hidden" name="sections" value="{{ user.section }}">
+                        </td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.password }}</td>
+                        <td>
+                            {% if user.exists %}
+                                <span class="badge badge-success" style="background-color: green; color: white;">Already Created</span>
+                            {% else %}
+                                <span class="badge badge-danger" style="background-color: red; color: white;">Not Created</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.fathername }}</td>
+                        <td>{{ user.gender }}</td>
+                        <td>{{ user.dob }}</td>
+                        <td>{{ user.religion }}</td>
+                        <td>{{ user.admitioncategory }}</td>
+                        <td>{{ user.address }}</td>
+                        <td>{{ user.phone }}</td>
+                        <td>{{ user.category }}</td>
+                        <td>{{ user.mole }}</td>
+                        <td>{{ user.dept }}</td>
+                        <td>{{ user.section }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-center">
+            <button type="submit" id="import-btn" class="btn btn-success" disabled>Import Selected Users</button>
+        </div>
+    </form>
+
+    {% else %}
+    <p class="text-center">No user data found.</p>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let searchBox = document.getElementById("search-box");
+    let filterGender = document.getElementById("filter-gender");
+    let filterDept = document.getElementById("filter-dept");
+    let rows = Array.from(document.querySelectorAll("tbody tr"));
+    let usernameHeader = document.getElementById("username-header");
+    let ascending = true;  
+
+    function filterTable() {
+        let searchText = searchBox.value.toLowerCase();
+        let selectedGender = filterGender.value.toLowerCase();
+        let selectedDept = filterDept.value.toLowerCase();
+
+        rows.forEach(row => {
+            let username = row.children[1].textContent.toLowerCase();
+            let email = row.children[2].textContent.toLowerCase();
+            let name = row.children[3].textContent.toLowerCase();
+            let gender = row.children[7].textContent.toLowerCase().trim();
+            let dept = row.children[15].textContent.toLowerCase().trim();
+
+            let matchesSearch = username.includes(searchText) || email.includes(searchText) || name.includes(searchText);
+            let matchesGender = selectedGender === "" || gender === selectedGender;
+            let matchesDept = selectedDept === "" || dept === selectedDept;
+
+            row.style.display = (matchesSearch && matchesGender && matchesDept) ? "" : "none";
+        });
+    }
+
+    function sortTable() {
+        rows.sort((a, b) => {
+            let usernameA = a.children[1].textContent.toLowerCase();
+            let usernameB = b.children[1].textContent.toLowerCase();
+            return ascending ? usernameA.localeCompare(usernameB) : usernameB.localeCompare(usernameA);
+        });
+
+        ascending = !ascending;
+        usernameHeader.innerHTML = `Username ${ascending ? "&#9650;" : "&#9660;"}`;
+
+        let tbody = document.querySelector("tbody");
+        tbody.innerHTML = "";
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    usernameHeader.addEventListener("click", sortTable);
+
+    // Initial Sort (Ascending)
+    sortTable();
+
+    // Event Listeners for Filtering
+    searchBox.addEventListener("input", filterTable);
+    filterGender.addEventListener("change", filterTable);
+    filterDept.addEventListener("change", filterTable);
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let selectAll = document.getElementById('select-all');
+    let checkboxes = document.querySelectorAll('.user-checkbox:not(:disabled)');
+    let importBtn = document.getElementById('import-btn');
+    let maxSelection = 50;
+
+    function updateButtonText() {
+        let selected = document.querySelectorAll('.user-checkbox:checked').length;
+        importBtn.disabled = selected === 0;
+        importBtn.textContent = selected > 0 ? `Import ${selected} Selected Users` : "Import Selected Users";
+    }
+
+    function toggleHiddenInputs() {
+        document.querySelectorAll('input[name="usernames"], input[name="emails"], input[name="names"], input[name="passwords"], input[name="pictures"], input[name="fathernames"], input[name="genders"], input[name="dobs"], input[name="religions"], input[name="admitioncategories"], input[name="addresses"], input[name="phones"], input[name="categories"], input[name="moles"], input[name="depts"], input[name="sections"]').forEach(input => {
+            let row = input.closest("tr");
+            let checkbox = row.querySelector(".user-checkbox");
+            input.disabled = !checkbox.checked;
+        });
+    }
+
+    selectAll.addEventListener('change', function () {
+        let selectedCount = document.querySelectorAll('.user-checkbox:checked').length;
+        if (this.checked) {
+            checkboxes.forEach(checkbox => {
+                if (selectedCount < maxSelection) {
+                    checkbox.checked = true;
+                    selectedCount++;
+                } else {
+                    checkbox.checked = false;
+                }
+            });
+        } else {
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+        }
+        updateButtonText();
+        toggleHiddenInputs();
+    });
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            let selectedCount = document.querySelectorAll('.user-checkbox:checked').length;
+            if (selectedCount > maxSelection) {
+                this.checked = false;
+                alert(`You can select a maximum of ${maxSelection} users.`);
+            }
+            updateButtonText();
+            toggleHiddenInputs();
+        });
+    });
+
+    updateButtonText();
+    toggleHiddenInputs();
+});
+</script>
+
+
+{% endblock body %}

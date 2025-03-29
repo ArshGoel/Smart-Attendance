@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Student Dashboard{% endblock title %}
+{% block student_dashactive %}active{% endblock student_dashactive %}
+
+{% block body %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/student_dashboard.css' %}">
+<style>
+    .bg-image{
+        filter: blur(8px);
+    -webkit-filter: blur(8px);
+    }
+</style> 
+{% endblock extra_css %}
+
+<div class="container bg-white p-4 rounded shadow" style="max-width: 1400px;">
+<h1>Attendance</h1>
+<div class="navigation">
+    <a href="{% url 'student' %}?period=week" {% if current_period == 'week' %}class="active"{% endif %}>Week</a>
+    <a href="{% url 'student' %}?period=month" {% if current_period == 'month' %}class="active"{% endif %}>Month</a>
+</div>
+
+{% if current_period == 'week' %}
+    <table class="table table-striped table-bordered border-black table-sm">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if attendance_details %}
+                {% for detail in attendance_details %}
+                    <tr>
+                        <td>{{ detail.date }}</td>
+                        <td>{{ detail.status }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="2" class="text-center">No attendance records found for this week.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+{% elif current_period == 'month' %}
+    <div class="calendar">
+        {% for week in weeks %}
+            <div class="week">
+                {% for day in week %}
+                    <div class="day">
+                        <span>{{ day.date|date:"d" }}</span>
+                        <span>{{ day.status }}</span>
+                    </div>
+                {% empty %}
+                    <div class="day">No data</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% endblock body %}

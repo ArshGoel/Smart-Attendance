@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Forbidden Access{% endblock title %}
+
+{% block body %}
+<div class="container bg-white p-4 rounded shadow" style="max-width: 1400px;">
+    <div class="container">
+        <h1>Access Denied</h1>
+        <p>You are not allowed to access this page.</p>
+        <a href="{% url "home"%}">Go back to Home</a>
+    </div>
+</div>
+{% endblock body %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Update The Dataset{% endblock page_title %}
+{% block upload_useractive%}active{% endblock upload_useractive%}
+{% block body %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/view_student.css' %}">
+<style>
+    .tick {
+        color: green;
+        font-size: 20px;
+    }
+    .cross {
+        color: red;
+        font-size: 20px;
+    }
+    .bg-image{
+        filter: blur(8px);
+    -webkit-filter: blur(8px);
+    }
+</style>
+
+{% endblock extra_css %}
+
+<div class="container bg-white p-4 rounded shadow" style="max-width: 1400px;">
+
+<h1>All Users</h1>
+
+<table class="table table-striped table-bordered border-black table-sm">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Folder Exists</th>
+            <th>View Images</th>
+            <th>Train Images</th>
+            <th>Last Updated</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in user_data %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>
+                    {% if user.folder_exists %}
+                        <span class="tick">✓</span>
+                    {% else %}
+                        <span class="cross">✗</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.folder_exists %}
+                        <a href="{% url 'view_images' user.username %}" class="btn btn-primary">View Images</a>
+                    {% else %}
+                        <span>No images available</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.folder_exists %}
+                        <a href="{% url 'train_images' user.username %}" class="btn btn-success">Train Images</a>
+                    {% else %}
+                        <span>No images available</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.last_updated %}
+                        {{ user.last_updated|date:"F j, Y, g:i a" }}
+                    {% else %}
+                        Not yet updated
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    <form id="train-form" method="POST" action="{% url 'train_all_images' %}">
+        {% csrf_token %}
+        <button type="submit" id="train-button">Train All Images</button>
+    </form>
+    
+    <div id="message" style="color: red;"></div>
+    
+    <script>
+        document.getElementById('train-form').onsubmit = function(e) {
+            e.preventDefault();  // Prevent default form submission
+            const button = document.getElementById('train-button');
+            const messageDiv = document.getElementById('message');
+            
+            // Disable the button to prevent multiple submissions
+            button.disabled = true;
+            button.innerText = 'Training...';
+    
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                messageDiv.innerText = data.message;  // Display success/error message
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                messageDiv.innerText = 'An error occurred.';
+            })
+            .finally(() => {
+                // Re-enable the button and reset its text after the request is completed
+                button.disabled = false;
+                button.innerText = 'Train All Images';
+            });
+        };
+    </script>
+{% endblock body %}

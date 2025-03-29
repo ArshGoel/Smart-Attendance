@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Update The Dataset{% endblock page_title %}
+{% block body %}
+{% block extra_css %}
+<style>
+    .bg-image{
+        filter: blur(8px);
+    -webkit-filter: blur(8px);
+    }
+</style>
+{% endblock extra_css %} 
+
+<div class="container bg-white p-4 rounded shadow" style="max-width: 1400px;">
+    <h1>Images for {{ username }}</h1>
+    <div>
+        {% for image_url in image_urls %}
+            <img src="{{ image_url|safe }}" alt="Image" style="width: 200px; height: auto; margin: 10px;">
+
+        {% empty %}
+            <p>No images available.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock body %}
