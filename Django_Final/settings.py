@@ -20,6 +20,8 @@ INSTALLED_APPS = [
     #Added Manually
     "Accounts.apps.AccountsConfig",
     "Services.apps.ServicesConfig",
+    'whitenoise.runserver_nostatic',
+
 ]
 
 MIDDLEWARE = [
@@ -30,6 +32,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+    #Added Manually
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = "Django_Final.urls"
