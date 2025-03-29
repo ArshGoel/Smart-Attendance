@@ -1,0 +1,71 @@
+.table {
+    width: auto; /* Ensure the table doesn't stretch to fill the container */
+    table-layout: auto; /* Let the table adjust width based on its content */
+    margin: 20px 0 0 20px; /* Add 20px margin from top and left */
+}
+.table th, .table td {
+    white-space: nowrap; /* Prevent text wrapping */
+    text-align: center; /* Center align text */
+    padding: 8px; /* Adjust padding as needed */
+}
+.table th {
+    text-align: center; /* Center align table headers */
+}
+.table td {
+    text-align: center; /* Center align table data */
+}
+/* student_dashboard.css */
+
+/* Basic styling */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.table th {
+    background-color: #f4f4f4;
+}
+
+/* Navigation styles */
+.navigation {
+    margin-bottom: 20px;
+}
+
+.navigation a {
+    margin: 0 10px;
+    text-decoration: none;
+    color: #007bff;
+}
+
+.navigation a.active {
+    font-weight: bold;
+    color: #0056b3;
+}
+
+/* Calendar styling */
+.calendar {
+    display: flex;
+    flex-direction: column;
+}
+
+.week {
+    display: flex;
+}
+
+.day {
+    width: calc(100% / 7);
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.day span {
+    display: block;
+}
