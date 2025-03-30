@@ -1,8 +1,8 @@
 echo "BUILD START"
 
 # Install dependencies
-# python -m pip install --upgrade pip
-python -m pip install --no-cache-dir django whitenoise opencv-python cmake face-recognition 
+# python -m pip install --upgrade pi
+pip install django whitenoise opencv-python cmake face-recognition 
 
 
 # Install additional dependencies from requirements.txt
