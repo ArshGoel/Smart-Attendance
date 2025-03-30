@@ -2,7 +2,8 @@ echo "BUILD START"
 
 # Install dependencies
 python -m pip install --upgrade pip
-python -m pip install --no-cache-dir opencv-python-headless face_recognition dlib opencv-contrib-python
+python -m pip install --no-cache-dir django opencv-python cmake face-recognition 
+
 
 # Install additional dependencies from requirements.txt
 python -m pip install -r requirements.txt
