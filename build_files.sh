@@ -1,5 +1,7 @@
 echo "BUILD START"
 
+export PATH="/python312/bin:$PATH"
+echo "Updated PATH: $PATH"
 
 # Install dlib separately before other packages
 python3 -m pip install cmake
