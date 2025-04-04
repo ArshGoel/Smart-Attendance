@@ -23,9 +23,9 @@
         <button type="submit">Capture</button>
     </form>
 </div>
-<script>
+{% comment %} <script>
     window.addEventListener("beforeunload", function () {
         fetch("{% url 'stop_camera' %}", { method: "POST" });  // Call stop_camera when user leaves
     });
-</script>
+</script> {% endcomment %}
 {% endblock body %}

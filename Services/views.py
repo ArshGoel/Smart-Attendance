@@ -103,7 +103,7 @@ def process_images(file_path):
         cv2.rectangle(img_with_boxes, (left, top), (right, bottom), color, 2)
 
     # Resize image for display
-    desired_width, desired_height = 800, 600
+    desired_width, desired_height = 1400, 900   
     img_with_boxes_resized = cv2.resize(img_with_boxes, (desired_width, desired_height))
 
     # Save processed image
@@ -290,6 +290,7 @@ def student(request):
 def not_allowed(request):
     return render(request,'invalid.html')
 
+# url = "http://192.168.31.49:8080/video"  # Replace with your IP camera stream URL
 cam = cv2.VideoCapture(0)
 face_cascade = cv2.CascadeClassifier('static/models/haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier('static/models/haarcascade_eye.xml')

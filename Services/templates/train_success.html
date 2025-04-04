@@ -4,9 +4,18 @@
 {% block page_title %}Update The Dataset{% endblock page_title %}
 
 {% block body %}
+{% block extra_css %}
+<style>
+    .bg-image{
+        filter: blur(8px);
+    -webkit-filter: blur(8px);
+    }
+</style>
+{% endblock extra_css %} 
+
+<div class="container bg-white p-4 rounded shadow" style="max-width: 1400px;">
 <h1>Training Complete!</h1>
 <p>NPZ file has been saved for user: {{ username }}</p>
 <p>File saved at: {{ output_file }}</p>
-<p>Training Accuracy: {{ accuracy|floatformat:2 }}%</p>
 <a href="{% url 'view_student' %}" class="btn btn-primary">Back to User List</a>
 {% endblock body %}

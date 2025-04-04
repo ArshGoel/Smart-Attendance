@@ -4,6 +4,16 @@
 {% block title %}Teacher Dashboard{% endblock title %}
 
 {% block body %}
+{% block extra_css %}
+<style>
+    .bg-image{
+        filter: blur(8px);
+    -webkit-filter: blur(8px);
+    }
+</style> 
+{% endblock extra_css %}
+
+<div class="container bg-white p-4 rounded shadow" style="max-width: 1400px;">
 <h2>Captured Images</h2>
     <div>
         {% for image in captured_images %}
