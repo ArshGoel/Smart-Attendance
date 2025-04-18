@@ -17,3 +17,4 @@ typing_extensions==4.13.0
 tzdata==2025.2
 virtualenv==20.29.3
 whitenoise==6.9.0
+gunicorn==23.0.0
