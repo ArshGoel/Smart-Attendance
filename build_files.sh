@@ -1,13 +1,6 @@
 echo "BUILD START"
-
-# Install dlib separately before other packages
-python3 -m pip install cmake
-python3 -m pip install dlib
-
-# Install other Python dependencies
-python3 -m pip install django opencv-python whitenoise face-recognition
-
-# Collect static files
-python3 manage.py collectstatic --noinput
-
+python -m pip install -r requirements.txt
+python -m manage.py makemigrations 
+python -m manage.py migrate
+python manage.py collectstatic --noinput --clear
 echo "BUILD END"
