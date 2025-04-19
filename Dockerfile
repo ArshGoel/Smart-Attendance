@@ -33,4 +33,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir dlib
 
 # Start your app (adjust this line)
-CMD ["gunicorn", "yourproject.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "Django_Final.wsgi:application", "--bind", "0.0.0.0:8000"]
