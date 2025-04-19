@@ -1,6 +1,6 @@
 echo "BUILD START"
 # Update and install dependencies (for Debian/Ubuntu-based)
-apt-get update && apt-get install -y build-essential cmake python3-dev libboost-all-dev
+apk update && apk add build-base cmake python3-dev boost-dev
 
 # Upgrade pip
 python3 -m pip install --upgrade pip
