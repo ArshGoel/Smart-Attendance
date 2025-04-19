@@ -21,7 +21,11 @@ COPY . /app
 # Install Python dependencies
 # Remove the Windows wheel line if you had it
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir dlib
+# Add to Dockerfile
+ADD https://github.com/z-mahmud22/Dlib_Windows_Python3.x/blob/main/dlib-19.22.99-cp310-cp310-win_amd64.whl /app/dlib.whl
+RUN pip install --no-cache-dir /app/dlib.whl
+
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Run your Django server (adjust if using Gunicorn etc.)
