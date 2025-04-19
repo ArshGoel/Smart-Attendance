@@ -26,4 +26,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8000
 
 # Command to run the application
-CMD ["gunicorn", "your_project_name.wsgi:application"]
+CMD ["gunicorn", "Django_Final.wsgi:application"]
