@@ -29,3 +29,8 @@ RUN wget http://dlib.net/files/dlib-19.9.tar.bz2 && \
 
 # Set working directory
 WORKDIR /app
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir dlib
+
+# Start your app (adjust this line)
+CMD ["gunicorn", "yourproject.wsgi:application", "--bind", "0.0.0.0:8000"]
