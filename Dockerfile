@@ -24,10 +24,10 @@ COPY . /app
 COPY static/Dlib/dlib-19.22.99-cp310-cp310-win_amd64.whl /app/dlib-19.22.99-cp310-cp310-win_amd64.whl
 
 # Install the required Python packages from requirements.txt
+RUN pip install --no-cache-dir /app/dlib-19.22.99-cp310-cp310-win_amd64.whl
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install dlib from the pre-built wheel file (if available)
-RUN pip install --no-cache-dir /app/dlib-19.22.99-cp310-cp310-win_amd64.whl
 
 # Expose the port that the Django app will run on
 EXPOSE 8000
