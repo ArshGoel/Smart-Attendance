@@ -1,32 +1,27 @@
 FROM python:3.10-slim
 
-# Install dlib system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    g++ \
-    wget \
-    libboost-all-dev \
-    libopenblas-dev \
-    liblapack-dev \
-    libx11-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
-WORKDIR /app
-
-# Copy your project files
-COPY . /app
+# # Install system dependencies
+# RUN apt-get update && apt-get install -y \
+#     build-essential \
+#     cmake \
+#     pkg-config \
+#     libx11-dev \
+#     libatlas-base-dev \
+#     libgtk-3-dev \
+#     libboost-all-dev \
+#     python3-dev \
+#     wget \
+#     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-# Remove the Windows wheel line if you had it
-RUN pip install --upgrade pip
-# Add to Dockerfile
-ADD https://github.com/z-mahmud22/Dlib_Windows_Python3.x/blob/main/dlib-19.22.99-cp310-cp310-win_amd64.whl /app/dlib.whl
-RUN pip install --no-cache-dir /app/dlib.whl
+# RUN pip install --no-cache-dir numpy
 
-
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Run your Django server (adjust if using Gunicorn etc.)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Build dlib from source
+WORKDIR /tmp
+RUN wget http://dlib.net/files/dlib-19.9.tar.bz2 && \
+    tar xvf dlib-19.9.tar.bz2 && \
+    cd dlib-19.9 && \
+    mkdir build && cd build && \
+    cmake .. && cmake --build . --config Release && \
+    cd .. && python3 setup.py install && \
+    cd / && rm -rf /tmp/*
