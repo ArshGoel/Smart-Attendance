@@ -1,7 +1,7 @@
-# Use the official Python image as a base image
-FROM python:3.10-slim
+# Use a Python image as the base image
+FROM python:3.9-slim
 
-# Install system dependencies required by dlib
+# Install system dependencies for building dlib
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -16,13 +16,20 @@ RUN apt-get update && apt-get install -y \
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# Copy the project files to the container's /app directory
 COPY . /app
 
-# Install Python dependencies
+# If you have a pre-built dlib wheel in the static folder, copy it to the container
+# Assuming the wheel file is located in the static folder at /static/dlib.whl
+COPY static/Dlib/dlib-19.22.99-cp310-cp310-win_amd64.whl /app/dlib-19.22.99-cp310-cp310-win_amd64.whl
+
+# Install the required Python packages from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port 8000
+# Install dlib from the pre-built wheel file (if available)
+RUN pip install --no-cache-dir /app/dlib-19.22.99-cp310-cp310-win_amd64.whl
+
+# Expose the port that the Django app will run on
 EXPOSE 8000
 
 # Command to run the application
