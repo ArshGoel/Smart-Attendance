@@ -1,21 +1,21 @@
 FROM python:3.10-slim
 
-# Install system dependencies
-# RUN apt-get update && apt-get install -y \
-#     wget \
-#     build-essential \
-#     cmake \
-#     pkg-config \
-#     libx11-dev \
-#     libatlas-base-dev \
-#     libgtk-3-dev \
-#     libboost-all-dev \
-#     python3-dev \
-#     python3-pip \
-#  && apt-get clean
+Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    build-essential \
+    cmake \
+    pkg-config \
+    libx11-dev \
+    libatlas-base-dev \
+    libgtk-3-dev \
+    libboost-all-dev \
+    python3-dev \
+    python3-pip \
+ && apt-get clean
 
-# # Install numpy
-# RUN pip3 install --upgrade pip numpy
+# Install numpy
+RUN pip3 install --upgrade pip numpy
 
 # Build and install dlib from source
 WORKDIR /tmp
