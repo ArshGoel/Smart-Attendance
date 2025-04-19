@@ -1,0 +1,24 @@
+Steps to install Dlib:
+Install Python from Python.org (download the 64-bit installer file)
+
+Download the wheel file for your specific Python version
+
+Open a terminal and install Dlib via:
+
+Python 3.7
+python -m pip install dlib-19.22.99-cp37-cp37m-win_amd64.whl 
+
+Python 3.8
+python -m pip install dlib-19.22.99-cp38-cp38-win_amd64.whl
+
+Python 3.9
+python -m pip install dlib-19.22.99-cp39-cp39-win_amd64.whl
+
+Python 3.10
+python -m pip install dlib-19.22.99-cp310-cp310-win_amd64.whl
+
+Python 3.11
+python -m pip install dlib-19.24.1-cp311-cp311-win_amd64.whl
+
+Python 3.12
+python -m pip install dlib-19.24.99-cp312-cp312-win_amd64.whl

@@ -1,4 +1,4 @@
-// Core JavaScript helper functions
+// Core javascript helper functions
 'use strict';
 
 // quickElement(tagType, parentReference [, textInChildNode, attribute, attributeValue ...]);
@@ -85,12 +85,6 @@ function findPosY(obj) {
         return (this.getSeconds() < 10) ? '0' + this.getSeconds() : this.getSeconds();
     };
 
-    Date.prototype.getAbbrevMonthName = function() {
-        return typeof window.CalendarNamespace === "undefined"
-            ? this.getTwoDigitMonth()
-            : window.CalendarNamespace.monthsOfYearAbbrev[this.getMonth()];
-    };
-
     Date.prototype.getFullMonthName = function() {
         return typeof window.CalendarNamespace === "undefined"
             ? this.getTwoDigitMonth()
@@ -99,7 +93,6 @@ function findPosY(obj) {
 
     Date.prototype.strftime = function(format) {
         const fields = {
-            b: this.getAbbrevMonthName(),
             B: this.getFullMonthName(),
             c: this.toString(),
             d: this.getTwoDigitDate(),
@@ -119,11 +112,11 @@ function findPosY(obj) {
         let result = '', i = 0;
         while (i < format.length) {
             if (format.charAt(i) === '%') {
-                result += fields[format.charAt(i + 1)];
+                result = result + fields[format.charAt(i + 1)];
                 ++i;
             }
             else {
-                result += format.charAt(i);
+                result = result + format.charAt(i);
             }
             ++i;
         }
