@@ -1,5 +1,5 @@
 # Use a Python image as the base image
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 # Install system dependencies for building dlib
 RUN apt-get update && apt-get install -y \
