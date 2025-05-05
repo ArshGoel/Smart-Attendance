@@ -2,16 +2,11 @@
 
 A web-based attendance management system leveraging face recognition technology to automate and streamline the process of recording attendance. Built with Django for the backend and deployed via Vercel.
 
-## 🌐 Live Demo
-
-Access the live application here: [smart-attendance-rosy.vercel.app](https://smart-attendance-rosy.vercel.app)
-
 ## 🧰 Features
 
 - **User Authentication**: Secure login and registration for users.
 - **Face Recognition**: Upload images to mark attendance using facial recognition.
 - **Attendance Records**: View and manage attendance logs.
-- **Responsive Design**: Accessible across various devices.
 
 ## ⚙️ Installation
 
@@ -19,6 +14,8 @@ Access the live application here: [smart-attendance-rosy.vercel.app](https://sma
 
 - Python 3.8 or higher
 - pip (Python package manager)
+- Dlib
+- Cmake
 - Git
 
 ### Steps
@@ -28,19 +25,19 @@ Access the live application here: [smart-attendance-rosy.vercel.app](https://sma
    ```bash
    git clone https://github.com/ArshGoel/Smart-Attendance.git
    cd Smart-Attendance
-Create a Virtual Environment
 
-bash
-Copy
-Edit
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-Install Dependencies
+   
+2. **Create a Virtual Environment**
 
-bash
-Copy
-Edit
-pip install -r requirements.txt
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   
+3. **Install Dependencies**
+
+   ```bash
+   pip install -r requirements.txt
+
 Apply Migrations
 
 bash
