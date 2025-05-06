@@ -38,54 +38,26 @@ A web-based attendance management system leveraging face recognition technology 
    ```bash
    pip install -r requirements.txt
 
-Apply Migrations
+4. **Apply Migrations**
 
-bash
-Copy
-Edit
-python manage.py migrate
-Run the Development Server
+   ```bash
+   python manage.py migrate
 
-bash
-Copy
-Edit
-python manage.py runserver
-Access the Application
+5. **Access the Application**
 
 Open your browser and navigate to http://localhost:8000/
 
 🐳 Docker Deployment (Optional)
 To run the application using Docker:
 
-Build the Docker Image
+**Build the Docker Image**
 
-bash
-Copy
-Edit
-docker build -t smart-attendance .
+   ```bash
+      docker build -t smart-attendance 
+
 Run the Docker Container
 
-bash
-Copy
-Edit
-docker run -d -p 8000:8000 smart-attendance
-📄 License
-This project is licensed under the MIT License. See the LICENSE file for details.
+   ```bash
+   docker run -d -p 8000:8000 smart-attendance
 
-🙌 Acknowledgements
-Django
 
-Vercel
-
-OpenCV
-
-face_recognition
-
-yaml
-Copy
-Edit
-
----
-
-Feel free to customize this `README.md` further to suit your project's specific needs or to add more detailed instructions and features.
-::contentReference[oaicite:0]{index=0}
