@@ -10,7 +10,6 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [
-    '*',
     'https://smart-attendance-1-q7ja.onrender.com'
 ]
 
