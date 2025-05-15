@@ -18,19 +18,20 @@ from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, StreamingHttpResponse
 
+# Paths for processed and original attendance images
 PROCESSED_PATH = os.path.join(settings.MEDIA_ROOT, 'Attendance', 'processed')
 ORIGINAL_PATH = os.path.join(settings.MEDIA_ROOT, 'Attendance', 'original')
-DATASETS_PATH = os.path.join(settings.MEDIA_ROOT, 'Datasets')
-ENCODING_PATH = os.path.join(settings.MEDIA_ROOT, 'Encodings','Overall', 'overall_model.npz')
 
+# Ensure the directories exist
 os.makedirs(PROCESSED_PATH, exist_ok=True)
 os.makedirs(ORIGINAL_PATH, exist_ok=True)
 
-# Cache loaded encodings globally to avoid reload on every request
-_cached_encodings = None
-_cached_labels = None
+# Training Directory (All User Folders)
+DATASETS_PATH = os.path.join(settings.MEDIA_ROOT, 'Datasets')
+ENCODING_PATH = os.path.join(settings.MEDIA_ROOT, 'Encodings','Overall', 'overall_model.npz')
 
 def train_face_recognition():
+    """Train the model and save encodings to NPZ file."""
     face_encodings = []
     face_labels = []
 
@@ -44,54 +45,42 @@ def train_face_recognition():
                 image_path = os.path.join(user_folder_path, image_name)
                 image = face_recognition.load_image_file(image_path)
                 face_locations = face_recognition.face_locations(image)
-                if not face_locations:
-                    continue
-                # Only encode the first face found (likely the user)
-                encoding = face_recognition.face_encodings(image, known_face_locations=face_locations[:1])
-                if encoding:
-                    face_encodings.append(encoding[0])
-                    face_labels.append(user_folder)
+                face_encodings_in_image = face_recognition.face_encodings(image, face_locations)
+
+                label = user_folder  # Username as label
+
+                for encoding in face_encodings_in_image:
+                    face_encodings.append(encoding)
+                    face_labels.append(label)
 
     np.savez(ENCODING_PATH, encodings=face_encodings, labels=face_labels)
     return {'status': 'success', 'message': 'Training completed successfully.', 'npz_file': ENCODING_PATH}
 
 def load_training_data():
-    global _cached_encodings, _cached_labels
-    if _cached_encodings is not None and _cached_labels is not None:
-        return _cached_encodings, _cached_labels
-
+    """Load training data from NPZ file."""
     if not os.path.exists(ENCODING_PATH):
         return [], []
 
     data = np.load(ENCODING_PATH, allow_pickle=True)
-    _cached_encodings = list(data['encodings'])
-    _cached_labels = list(data['labels'])
-    return _cached_encodings, _cached_labels
+    return list(data['encodings']), list(data['labels'])
 
 def process_images(file_path):
+    """Process images, recognize faces, and save processed images."""
     face_encodings, face_labels = load_training_data()
     if not face_encodings or not face_labels:
         return [], None
 
-    # Load image with smaller size to save memory (reduce large images)
-    image = cv2.imread(file_path)
-    if image is None:
-        return [], None
-    # Resize to max width 800px if larger, maintaining aspect ratio
-    height, width = image.shape[:2]
-    if width > 800:
-        scale = 800 / width
-        image = cv2.resize(image, (800, int(height * scale)))
-    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-    face_locations = face_recognition.face_locations(rgb_image)
+    test_image = face_recognition.load_image_file(file_path)
+    face_locations = face_recognition.face_locations(test_image)
     if not face_locations:
         return [], None
 
-    face_encodings_in_image = face_recognition.face_encodings(rgb_image, face_locations)
+    face_encodings_in_image = face_recognition.face_encodings(test_image, face_locations)
+    img_with_boxes = cv2.cvtColor(test_image, cv2.COLOR_RGB2BGR)
+
     results = []
-    threshold = 0.6
-    confidence_threshold = 55
+    threshold = 0.6  # Distance threshold
+    confidence_threshold = 55  # Minimum confidence percentage
 
     for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings_in_image):
         distances = face_recognition.face_distance(face_encodings, face_encoding)
@@ -103,22 +92,28 @@ def process_images(file_path):
             if confidence > confidence_threshold:
                 predicted_name = face_labels[best_match_index].split('_')[0]
                 results.append(predicted_name)
-                color = (0, 255, 0)
+                color = (0, 255, 0)  # Green for recognized
             else:
                 predicted_name = "Unknown"
-                color = (0, 0, 255)
+                color = (0, 0, 255)  # Red for unrecognized
         else:
             predicted_name = "Unknown"
             color = (0, 0, 255)
 
-        cv2.rectangle(image, (left, top), (right, bottom), color, 2)
+        cv2.rectangle(img_with_boxes, (left, top), (right, bottom), color, 2)
 
+    # Resize image for display
+    desired_width, desired_height = 1400, 900   
+    img_with_boxes_resized = cv2.resize(img_with_boxes, (desired_width, desired_height))
+
+    # Save processed image
     processed_image_path = os.path.join(PROCESSED_PATH, f'processed_{os.path.basename(file_path)}')
-    cv2.imwrite(processed_image_path, image)
+    cv2.imwrite(processed_image_path, img_with_boxes_resized)
+
     return results, processed_image_path
 
-@login_required
 def teacher(request):
+    """Handle teacher attendance marking."""
     if not request.user.is_superuser:
         messages.error(request, "Forbidden Access")
         return redirect('not_allowed')
@@ -132,23 +127,25 @@ def teacher(request):
             file_paths = []
 
             for image in images:
-                timestamp = datetime.datetime.now().strftime("%d%m%y_%H%M%S%f")
-                original_filename = f'original_{timestamp}.jpg'
+                original_filename = f'original_{datetime.datetime.now().strftime("%d%m%y_%H%M%S")}.jpg'
                 original_path = os.path.join(ORIGINAL_PATH, original_filename)
+
                 with open(original_path, 'wb') as f:
                     f.write(image.read())
+
                 file_paths.append(original_path)
 
             results = []
             recognized_students = set()
 
-            # Process one image at a time and free memory after each
             for file_path in file_paths:
                 result, img_with_boxes_path = process_images(file_path)
                 recognized_students.update(result)
-                processed_image_url = os.path.join(settings.MEDIA_URL, 'Attendance', 'processed', os.path.basename(img_with_boxes_path))
+                processed_image_url = os.path.join(settings.MEDIA_URL, 'Attendance', 'processed', os.path.basename(img_with_boxes_path)) # type: ignore
+
                 results.append({'result': result, 'image_path': processed_image_url})
 
+            # Store results in session
             request.session['attendance_results'] = results
             request.session['attendance_date'] = date
             request.session['recognized_students'] = list(recognized_students)
