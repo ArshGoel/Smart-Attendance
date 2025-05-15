@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
  && apt-get clean
 
-# Install numpy
+# Install numpy early to avoid conflicts
 RUN pip3 install --upgrade pip numpy
 
 # Build and install dlib from source
@@ -30,8 +30,12 @@ RUN wget http://dlib.net/files/dlib-19.9.tar.bz2 && \
 # Set working directory
 WORKDIR /app
 COPY . /app
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir dlib
 
-# Start your app (adjust this line)
-CMD ["gunicorn", "Django_Final.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose default Django dev server port
+EXPOSE 8000
+
+# Start using Django's development server
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
