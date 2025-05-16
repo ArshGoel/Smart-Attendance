@@ -14,18 +14,30 @@
 </style> 
 {% endblock extra_css %}
 
-<div class="container bg-white p-4 rounded shadow" style="max-width: 1400px;">
-    <h2>Live Video Feed</h2>
-    <img src="{% url 'video_feed' %}" width="640" height="480">
+{% csrf_token %}
+<video id="video" autoplay playsinline width="640" height="480"></video>
+<canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+<button id="snap">Capture</button>
 
-    <form action="{% url 'capture_image' %}" method="post">
-        {% csrf_token %}
-        <button type="submit">Capture</button>
-    </form>
-</div>
-{% comment %} <script>
-    window.addEventListener("beforeunload", function () {
-        fetch("{% url 'stop_camera' %}", { method: "POST" });  // Call stop_camera when user leaves
-    });
-</script> {% endcomment %}
+<form id="uploadForm" method="POST" enctype="multipart/form-data">
+  <input type="hidden" name="image" id="imageData">
+  <button type="submit">Upload Image</button>
+</form>
+
+<script>
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const imageInput = document.getElementById('imageData');
+
+  // Access webcam
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => video.srcObject = stream);
+
+  document.getElementById('snap').addEventListener('click', () => {
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataURL = canvas.toDataURL('image/jpeg');
+    imageInput.value = dataURL;
+  });
+</script>
+
 {% endblock body %}

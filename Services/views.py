@@ -333,63 +333,32 @@ def stop_camera(request):
     if cam.isOpened():
         cam.release()
     return JsonResponse({'status': 'Camera Released'})
+import base64
+from django.core.files.base import ContentFile
 
 @login_required
 def capture_image(request):
     if request.method == 'POST':
-        face_id = request.user.username
-        dataset_path = os.path.join(settings.MEDIA_ROOT, "Datasets", face_id)
+        image_data = request.POST.get('image')
+        if not image_data:
+            return render(request, 'capture_image.html', {'error': 'No image data received'})
 
+        format, imgstr = image_data.split(';base64,') 
+        ext = format.split('/')[-1]
+        data = ContentFile(base64.b64decode(imgstr), name=f"{request.user.username}_1.{ext}")
+
+        # Save image to Datasets/<username>
+        dataset_path = os.path.join(settings.MEDIA_ROOT, "Datasets", request.user.username)
         os.makedirs(dataset_path, exist_ok=True)
+        image_path = os.path.join(dataset_path, f"{request.user.username}_1.{ext}")
+        
+        with open(image_path, 'wb') as f:
+            f.write(data.read())
 
-        captured_images = []
-        c = 0
-
-        cam = cv2.VideoCapture(0)
-        if not cam.isOpened():
-            return render(request, 'capture_image.html', {'error': 'Cannot access camera'})
-
-        try:
-            while c < 40:
-                ret, img = cam.read()
-                if not ret:
-                    break
-
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                faces = face_cascade.detectMultiScale(
-                    gray,
-                    scaleFactor=1.1,
-                    minNeighbors=5,
-                    minSize=(100, 100)
-                )
-
-                if len(faces) == 0:
-                    # No faces detected, just continue to next frame without delay
-                    continue
-
-                for (x, y, w, h) in faces:
-                    face_roi = gray[y:y+h, x:x+w]
-                    eyes = eye_cascade.detectMultiScale(face_roi)
-
-                    if len(eyes) >= 1:
-                        c += 1
-                        filename = f"{face_id}_{c}.jpg"
-                        image_path = os.path.join(dataset_path, filename)
-                        cv2.imwrite(image_path, face_roi)
-                        captured_images.append(f"{settings.MEDIA_URL}Datasets/{face_id}/{filename}")
-
-                        if c >= 40:
-                            break
-
-                # Instead of time.sleep, you can add a small delay by skipping frames
-                # Or just continue immediately to avoid blocking the server
-
-        finally:
-            cam.release()
-
-        return render(request, 'capture_success.html', {'captured_images': captured_images})
+        return render(request, 'capture_image.html', {'success': 'Image captured successfully'})
 
     return render(request, 'capture_image.html')
+
 
 def train_images(request, username):
     # Define folder paths
