@@ -16,7 +16,7 @@ urlpatterns = [
     path('users/<str:username>/train/', views.train_images, name='train_images'),
 
     path('train_all_images/', views.train_all_images, name='train_all_images'),
-    
+    path('export-media/', views.export_media_zip, name='export_media'),
     path('attendance/', views.attendance, name='attendance'),
     path('save_attendance', views.save_attendance, name='save_attendance'),
     

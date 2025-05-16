@@ -2,8 +2,10 @@ import os
 import cv2
 import time
 import json
+import zipfile
 import datetime
 import numpy as np
+from io import BytesIO
 import face_recognition
 from PIL import Image, ImageDraw
 from django.conf import settings
@@ -11,6 +13,7 @@ from django.contrib import messages
 from django.shortcuts import render
 from Services.models import Attendance
 from django.contrib.auth.models import User
+from django.http import FileResponse, Http404
 from django.shortcuts import redirect, render
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
@@ -146,7 +149,7 @@ def teacher(request):
             for file_path in file_paths:
                 result, img_with_boxes_path = process_images(file_path)
                 recognized_students.update(result)
-                processed_image_url = os.path.join(settings.MEDIA_URL, 'Attendance', 'processed', os.path.basename(img_with_boxes_path))
+                processed_image_url = os.path.join(settings.MEDIA_URL, 'Attendance', 'processed', os.path.basename(img_with_boxes_path)) # type: ignore
                 results.append({'result': result, 'image_path': processed_image_url})
 
             request.session['attendance_results'] = results
@@ -473,3 +476,22 @@ def view_images(request, username):
     image_urls = [os.path.join(settings.MEDIA_URL, 'Datasets', username, img) for img in images]
 
     return render(request, 'view_images.html', {'username': username, 'image_urls': image_urls})
+
+def export_media_zip(request):
+    media_root = settings.MEDIA_ROOT
+    zip_buffer = BytesIO()
+
+    try:
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for root, dirs, files in os.walk(media_root):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, media_root)
+                    zip_file.write(file_path, arcname)
+
+        zip_buffer.seek(0)
+        response = FileResponse(zip_buffer, as_attachment=True, filename='media_export.zip')
+        return response
+
+    except Exception as e:
+        raise Http404("Unable to create media export: " + str(e))
