@@ -1,166 +1,107 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Capture Images{% endblock title %}
 {% block captureactive %}active{% endblock captureactive %}
 
-
 {% block body %}
 {% block extra_css %}
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
-<script>
-  // Extract CSRF token from cookie (if using cookies) or use Django's template tag
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-  const csrftoken = getCookie('csrftoken');
-</script>
-
 <style>
-    .bg-image{
+    .bg-image {
         filter: blur(8px);
-    -webkit-filter: blur(8px);
+        -webkit-filter: blur(8px);
     }
-    #container {
-      position: relative;
-      width: 640px;
-      height: 480px;
-    }
-    #video, #overlay {
-      position: absolute;
-      top: 0; left: 0;
-      width: 640px;
-      height: 480px;
-    }
-</style> 
+</style>
 {% endblock extra_css %}
 
-<div id="container">
-  <video id="video" autoplay muted></video>
-  <canvas id="overlay"></canvas>
-</div>
+<p id="captureCountDisplay">Captured Images: 0/40</p>
+<video id="video" autoplay style="display: none;"></video>
+<canvas id="canvas" width="600px" height="400px"></canvas>
 
-<button id="captureBtn">Capture Face</button>
-
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
 <script>
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('overlay');
-  const context = canvas.getContext('2d');
-  canvas.width = 640;
-  canvas.height = 480;
+    let video = document.getElementById('video');
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('2d');
+    let model;
+    let captureCount = 0;
+    const totalCaptures = 40;
 
-  let detections = [];
-  let message = '';
+    const setupCamera = () => {
+        return navigator.mediaDevices
+            .getUserMedia({ video: { width: 600, height: 400 }, audio: false })
+            .then((stream) => {
+                video.srcObject = stream;
+                return new Promise((resolve) => {
+                    video.onloadedmetadata = () => resolve(video);
+                });
+            });
+    };
 
-  async function setupCamera() {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-    video.srcObject = stream;
-    return new Promise(resolve => {
-      video.onloadedmetadata = () => resolve(video);
-    });
-  }
+    const loadModel = async () => {
+        model = await blazeface.load();
+        console.log("BlazeFace model loaded.");
+    };
 
-  async function loadModels() {
-    await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-    await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models');
-  }
+    const sendImageToServer = (imageData, imageIndex) => {
+        fetch("{% url 'capture_image' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `image_data=${encodeURIComponent(imageData)}&image_index=${imageIndex}`
+        })
+        .then(response => response.text())
+        .then(data => {
+            console.log(data);
+        })
+        .catch(error => console.error('Error:', error));
+    };
 
-  async function startDetection() {
-    const options = new faceapi.TinyFaceDetectorOptions();
+    const captureLoop = async () => {
+        if (captureCount >= totalCaptures) return;
 
-    setInterval(async () => {
-      const result = await faceapi.detectAllFaces(video, options).withFaceLandmarks(true);
+        const predictions = await model.estimateFaces(video, false);
 
-      context.clearRect(0, 0, canvas.width, canvas.height);
+        if (predictions.length > 0) {
+            const face = predictions[0];
+            const [x1, y1] = face.topLeft;
+            const [x2, y2] = face.bottomRight;
 
-      if (result.length > 0) {
-        detections = result;
-        message = 'Face detected';
+            const width = x2 - x1;
+            const height = y2 - y1;
 
-        result.forEach(res => {
-          const box = res.detection.box;
-          context.strokeStyle = 'green';
-          context.lineWidth = 2;
-          context.strokeRect(box.x, box.y, box.width, box.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-          // Draw eyes landmarks
-          const leftEye = res.landmarks.getLeftEye();
-          const rightEye = res.landmarks.getRightEye();
+            // Create a temporary canvas for the cropped face
+            const faceCanvas = document.createElement('canvas');
+            faceCanvas.width = width;
+            faceCanvas.height = height;
 
-          context.fillStyle = 'blue';
-          leftEye.forEach(p => context.fillRect(p.x - 2, p.y - 2, 4, 4));
-          rightEye.forEach(p => context.fillRect(p.x - 2, p.y - 2, 4, 4));
-        });
-      } else {
-        detections = [];
-        message = 'No face detected';
-      }
+            const faceCtx = faceCanvas.getContext('2d');
+            faceCtx.drawImage(canvas, x1, y1, width, height, 0, 0, width, height);
 
-      // Draw message on top-left corner
-      context.fillStyle = 'yellow';
-      context.font = '20px Arial';
-      context.fillText(message, 10, 30);
-    }, 100);
-  }
-document.getElementById('captureBtn').addEventListener('click', () => {
-  if (detections.length > 0) {
-    const box = detections[0].detection.box;
-    const faceCanvas = document.createElement('canvas');
-    faceCanvas.width = box.width;
-    faceCanvas.height = box.height;
-    const faceCtx = faceCanvas.getContext('2d');
-    faceCtx.drawImage(video, box.x, box.y, box.width, box.height, 0, 0, box.width, box.height);
+            const imageData = canvas.toDataURL('image/jpeg');
 
-    const faceDataURL = faceCanvas.toDataURL('image/jpeg');
+            sendImageToServer(imageData,captureCount);
 
-    message = 'Captured!';
-    setTimeout(() => {
-      message = detections.length > 0 ? 'Face detected' : 'No face detected';
-    }, 2000);
+            captureCount++;
+            document.getElementById('captureCountDisplay').innerText = `Captured Images: ${captureCount}/${totalCaptures}`;
+        }
 
-    // Send to backend
-    fetch("{% url 'capture_image' %}", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': '{{ csrf_token }}',
-      },
-      body: JSON.stringify({ image: faceDataURL }),
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success){
-        alert('Image saved successfully!');
-      } else {
-        alert('Failed to save image.');
-      }
-    })
-    .catch(() => alert('Error sending image to server.'));
-  } else {
-    alert('No face detected to capture!');
-  }
-});
+        // Delay before next capture
+        setTimeout(captureLoop, 300); // 300ms delay
+    };
 
+    const start = async () => {
+        await setupCamera();
+        await loadModel();
+        captureLoop();
+    };
 
-  async function init() {
-    await loadModels();
-    await setupCamera();
-    startDetection();
-  }
-
-  init();
+    start();
 </script>
-
-
 
 {% endblock body %}

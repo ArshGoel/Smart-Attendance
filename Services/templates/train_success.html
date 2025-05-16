@@ -17,5 +17,8 @@
 <h1>Training Complete!</h1>
 <p>NPZ file has been saved for user: {{ username }}</p>
 <p>File saved at: {{ output_file }}</p>
+<p>Total Images Found: {{ total }}</p>
+<p>Images Successfully Trained: {{ trained }}</p>
+<p>Images Skipped (no face detected): {{ skipped }}</p>
 <a href="{% url 'view_student' %}" class="btn btn-primary">Back to User List</a>
 {% endblock body %}

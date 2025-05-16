@@ -1,7 +1,7 @@
 import os
 import cv2
+import time
 import json
-import base64
 import zipfile
 import datetime
 import numpy as np
@@ -13,7 +13,7 @@ from django.contrib import messages
 from django.shortcuts import render
 from Services.models import Attendance
 from django.contrib.auth.models import User
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
@@ -334,89 +334,88 @@ def stop_camera(request):
         cam.release()
     return JsonResponse({'status': 'Camera Released'})
 
-
+import os
+import uuid
+import base64
+from django.core.files.base import ContentFile
+from django.http import HttpResponse
+from django.shortcuts import render
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
 
 @login_required
 def capture_image(request):
     if request.method == 'POST':
-        import json
-        data = json.loads(request.body)
-        image_data = data.get('image')
+        image_data = request.POST.get('image_data')
+        image_index = request.POST.get('image_index')
+        student_name = request.user.username  # Use logged-in user
 
-        if not image_data:
-            return JsonResponse({'success': False, 'error': 'No image data received'})
+        if image_data and student_name:
+            format, imgstr = image_data.split(';base64,') 
+            ext = format.split('/')[-1]
+            file_name = f'{student_name}_{image_index}.{ext}'
 
-        # image_data is like: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...
-        format, imgstr = image_data.split(';base64,')
-        ext = format.split('/')[-1]  # jpeg
+            student_folder = os.path.join(settings.MEDIA_ROOT, 'Datasets', student_name)
+            os.makedirs(student_folder, exist_ok=True)
 
-        username = request.user.username
-        dataset_path = os.path.join(settings.MEDIA_ROOT, 'Datasets', username)
+            file_path = os.path.join(student_folder, file_name)
 
-        if not os.path.exists(dataset_path):
-            os.makedirs(dataset_path)
+            with open(file_path, 'wb') as f:
+                f.write(base64.b64decode(imgstr))
 
-        # Find next index i for filename username_i.jpg
-        existing_files = [f for f in os.listdir(dataset_path) if f.startswith(username) and f.endswith('.jpg')]
-        indices = []
-        for f in existing_files:
-            try:
-                idx = int(f.split('_')[-1].split('.')[0])
-                indices.append(idx)
-            except:
-                pass
-        next_index = max(indices) + 1 if indices else 1
+            return HttpResponse("Image saved.")
+        return HttpResponse("Missing data", status=400)
 
-        filename = f"{username}_{next_index}.jpg"
-        filepath = os.path.join(dataset_path, filename)
+    return render(request, 'capture_image.html')
 
-        with open(filepath, 'wb') as f:
-            f.write(base64.b64decode(imgstr))
-
-        return JsonResponse({'success': True, 'filename': filename})
-
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
-
-def train_images(request, username):
-    # Define folder paths
+def train_images(request, username): 
     folder_path = os.path.join(settings.MEDIA_ROOT, 'Datasets', username)
     output_folder = os.path.join(settings.MEDIA_ROOT, 'Encodings', 'Students', username)
 
     if not os.path.exists(folder_path):
         return render(request, 'error.html', {'message': 'No images found for this user.'})
 
-    # Create the output folder if it doesn't exist
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # Create NPZ file path
     output_file = os.path.join(output_folder, f"{username}.npz")
 
-    # Function to create NPZ file
-    def create_npz_file(image_folder, output_file):
-        face_encodings = []
-        face_labels = []
+    face_encodings = []
+    face_labels = []
 
-        for image_name in os.listdir(image_folder):
-            image_path = os.path.join(image_folder, image_name)
+    total_images = 0
+    trained_images = 0
+
+    for image_name in os.listdir(folder_path):
+        if not image_name.lower().endswith(('.jpg', '.jpeg', '.png')):
+            continue
+
+        total_images += 1
+        image_path = os.path.join(folder_path, image_name)
+
+        try:
             image = face_recognition.load_image_file(image_path)
             face_locations = face_recognition.face_locations(image)
-            face_encodings_in_image = face_recognition.face_encodings(image, face_locations)
+            encodings = face_recognition.face_encodings(image, face_locations)
 
-            label = image_name.split('_')[0]  # Extract only username (e.g., "228R1A0571")
+            if encodings:
+                for encoding in encodings:
+                    face_encodings.append(encoding)
+                    face_labels.append(username)
+                trained_images += 1
+        except Exception as e:
+            print(f"Error processing {image_name}: {str(e)}")
 
-            for encoding in face_encodings_in_image:
-                face_encodings.append(encoding)
-                face_labels.append(label)
-
-        # Save to NPZ file
+    if trained_images > 0:
         np.savez(output_file, encodings=face_encodings, labels=face_labels)
-        print(f"NPZ file saved to {output_file}")
 
-    create_npz_file(folder_path, output_file)
-
-    return render(request, 'train_success.html', {'username': username, 'output_file': output_file})
+    return render(request, 'train_success.html', {
+        'username': username,
+        'trained': trained_images,
+        'total': total_images,
+        'skipped': total_images - trained_images,
+        'output_file': output_file,
+    })
 
 def train_all_images(request):
     if request.method == "POST":  # Ensure it's a POST request
