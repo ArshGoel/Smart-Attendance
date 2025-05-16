@@ -45,7 +45,6 @@ class Student(models.Model):
     roll_number = models.CharField(max_length=10, unique=True)
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=100)
-    password = models.CharField(max_length=128)
     profile_picture = models.ImageField(upload_to='profile_images/', blank=True, null=True)
     fathername = models.CharField(max_length=100)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)

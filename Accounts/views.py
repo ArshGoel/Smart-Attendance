@@ -160,10 +160,8 @@ def import_users(request):
             student = Student.objects.create(
                 user=user,
                 roll_number=username,
-                # username=username,
                 email=email,
                 name=name,
-                password=password,
                 fathername=fathername,
                 gender=gender,
                 date_of_birth=dob,
