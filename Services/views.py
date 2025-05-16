@@ -340,39 +340,53 @@ def capture_image(request):
         face_id = request.user.username
         dataset_path = os.path.join(settings.MEDIA_ROOT, "Datasets", face_id)
 
-        if not os.path.exists(dataset_path):
-            os.makedirs(dataset_path)
+        os.makedirs(dataset_path, exist_ok=True)
 
         captured_images = []
         c = 0
 
-        cam = cv2.VideoCapture(0)  # Initialize camera
+        cam = cv2.VideoCapture(0)
+        if not cam.isOpened():
+            return render(request, 'capture_image.html', {'error': 'Cannot access camera'})
 
-        while c < 40:
-            ret, img = cam.read()
-            if not ret:
-                break
+        try:
+            while c < 40:
+                ret, img = cam.read()
+                if not ret:
+                    break
 
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(100, 100))
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                faces = face_cascade.detectMultiScale(
+                    gray,
+                    scaleFactor=1.1,
+                    minNeighbors=5,
+                    minSize=(100, 100)
+                )
 
-            for (x, y, w, h) in faces:
-                face_roi = gray[y:y+h, x:x+w]
-                eyes = eye_cascade.detectMultiScale(face_roi)
+                if len(faces) == 0:
+                    # No faces detected, just continue to next frame without delay
+                    continue
 
-                if len(eyes) >= 1:
-                    c += 1
-                    filename = f"{face_id}_{c}.jpg"
-                    image_path = os.path.join(dataset_path, filename)
-                    cv2.imwrite(image_path, face_roi)
-                    captured_images.append(f"{settings.MEDIA_URL}Datasets/{face_id}/{filename}")
+                for (x, y, w, h) in faces:
+                    face_roi = gray[y:y+h, x:x+w]
+                    eyes = eye_cascade.detectMultiScale(face_roi)
 
-                    time.sleep(0.5)
+                    if len(eyes) >= 1:
+                        c += 1
+                        filename = f"{face_id}_{c}.jpg"
+                        image_path = os.path.join(dataset_path, filename)
+                        cv2.imwrite(image_path, face_roi)
+                        captured_images.append(f"{settings.MEDIA_URL}Datasets/{face_id}/{filename}")
 
-            if c >= 40:
-                break
+                        if c >= 40:
+                            break
 
-        cam.release()  # Release camera when done
+                # Instead of time.sleep, you can add a small delay by skipping frames
+                # Or just continue immediately to avoid blocking the server
+
+        finally:
+            cam.release()
+
         return render(request, 'capture_success.html', {'captured_images': captured_images})
 
     return render(request, 'capture_image.html')
