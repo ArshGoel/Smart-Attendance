@@ -1,7 +1,7 @@
 import os
 import cv2
-import time
 import json
+import base64
 import zipfile
 import datetime
 import numpy as np
@@ -333,31 +333,49 @@ def stop_camera(request):
     if cam.isOpened():
         cam.release()
     return JsonResponse({'status': 'Camera Released'})
-import base64
-from django.core.files.base import ContentFile
+
+
 
 @login_required
 def capture_image(request):
     if request.method == 'POST':
-        image_data = request.POST.get('image')
+        import json
+        data = json.loads(request.body)
+        image_data = data.get('image')
+
         if not image_data:
-            return render(request, 'capture_image.html', {'error': 'No image data received'})
+            return JsonResponse({'success': False, 'error': 'No image data received'})
 
-        format, imgstr = image_data.split(';base64,') 
-        ext = format.split('/')[-1]
-        data = ContentFile(base64.b64decode(imgstr), name=f"{request.user.username}_1.{ext}")
+        # image_data is like: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...
+        format, imgstr = image_data.split(';base64,')
+        ext = format.split('/')[-1]  # jpeg
 
-        # Save image to Datasets/<username>
-        dataset_path = os.path.join(settings.MEDIA_ROOT, "Datasets", request.user.username)
-        os.makedirs(dataset_path, exist_ok=True)
-        image_path = os.path.join(dataset_path, f"{request.user.username}_1.{ext}")
-        
-        with open(image_path, 'wb') as f:
-            f.write(data.read())
+        username = request.user.username
+        dataset_path = os.path.join(settings.MEDIA_ROOT, 'Datasets', username)
 
-        return render(request, 'capture_image.html', {'success': 'Image captured successfully'})
+        if not os.path.exists(dataset_path):
+            os.makedirs(dataset_path)
 
-    return render(request, 'capture_image.html')
+        # Find next index i for filename username_i.jpg
+        existing_files = [f for f in os.listdir(dataset_path) if f.startswith(username) and f.endswith('.jpg')]
+        indices = []
+        for f in existing_files:
+            try:
+                idx = int(f.split('_')[-1].split('.')[0])
+                indices.append(idx)
+            except:
+                pass
+        next_index = max(indices) + 1 if indices else 1
+
+        filename = f"{username}_{next_index}.jpg"
+        filepath = os.path.join(dataset_path, filename)
+
+        with open(filepath, 'wb') as f:
+            f.write(base64.b64decode(imgstr))
+
+        return JsonResponse({'success': True, 'filename': filename})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
 def train_images(request, username):

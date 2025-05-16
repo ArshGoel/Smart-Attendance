@@ -6,38 +6,161 @@
 
 {% block body %}
 {% block extra_css %}
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+<script>
+  // Extract CSRF token from cookie (if using cookies) or use Django's template tag
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+</script>
+
 <style>
     .bg-image{
         filter: blur(8px);
     -webkit-filter: blur(8px);
     }
+    #container {
+      position: relative;
+      width: 640px;
+      height: 480px;
+    }
+    #video, #overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 640px;
+      height: 480px;
+    }
 </style> 
 {% endblock extra_css %}
 
-{% csrf_token %}
-<video id="video" autoplay playsinline width="640" height="480"></video>
-<canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
-<button id="snap">Capture</button>
+<div id="container">
+  <video id="video" autoplay muted></video>
+  <canvas id="overlay"></canvas>
+</div>
 
-<form id="uploadForm" method="POST" enctype="multipart/form-data">
-  <input type="hidden" name="image" id="imageData">
-  <button type="submit">Upload Image</button>
-</form>
+<button id="captureBtn">Capture Face</button>
 
 <script>
   const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const imageInput = document.getElementById('imageData');
+  const canvas = document.getElementById('overlay');
+  const context = canvas.getContext('2d');
+  canvas.width = 640;
+  canvas.height = 480;
 
-  // Access webcam
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => video.srcObject = stream);
+  let detections = [];
+  let message = '';
 
-  document.getElementById('snap').addEventListener('click', () => {
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataURL = canvas.toDataURL('image/jpeg');
-    imageInput.value = dataURL;
-  });
+  async function setupCamera() {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+    video.srcObject = stream;
+    return new Promise(resolve => {
+      video.onloadedmetadata = () => resolve(video);
+    });
+  }
+
+  async function loadModels() {
+    await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+    await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models');
+  }
+
+  async function startDetection() {
+    const options = new faceapi.TinyFaceDetectorOptions();
+
+    setInterval(async () => {
+      const result = await faceapi.detectAllFaces(video, options).withFaceLandmarks(true);
+
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (result.length > 0) {
+        detections = result;
+        message = 'Face detected';
+
+        result.forEach(res => {
+          const box = res.detection.box;
+          context.strokeStyle = 'green';
+          context.lineWidth = 2;
+          context.strokeRect(box.x, box.y, box.width, box.height);
+
+          // Draw eyes landmarks
+          const leftEye = res.landmarks.getLeftEye();
+          const rightEye = res.landmarks.getRightEye();
+
+          context.fillStyle = 'blue';
+          leftEye.forEach(p => context.fillRect(p.x - 2, p.y - 2, 4, 4));
+          rightEye.forEach(p => context.fillRect(p.x - 2, p.y - 2, 4, 4));
+        });
+      } else {
+        detections = [];
+        message = 'No face detected';
+      }
+
+      // Draw message on top-left corner
+      context.fillStyle = 'yellow';
+      context.font = '20px Arial';
+      context.fillText(message, 10, 30);
+    }, 100);
+  }
+document.getElementById('captureBtn').addEventListener('click', () => {
+  if (detections.length > 0) {
+    const box = detections[0].detection.box;
+    const faceCanvas = document.createElement('canvas');
+    faceCanvas.width = box.width;
+    faceCanvas.height = box.height;
+    const faceCtx = faceCanvas.getContext('2d');
+    faceCtx.drawImage(video, box.x, box.y, box.width, box.height, 0, 0, box.width, box.height);
+
+    const faceDataURL = faceCanvas.toDataURL('image/jpeg');
+
+    message = 'Captured!';
+    setTimeout(() => {
+      message = detections.length > 0 ? 'Face detected' : 'No face detected';
+    }, 2000);
+
+    // Send to backend
+    fetch("{% url 'capture_image' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({ image: faceDataURL }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success){
+        alert('Image saved successfully!');
+      } else {
+        alert('Failed to save image.');
+      }
+    })
+    .catch(() => alert('Error sending image to server.'));
+  } else {
+    alert('No face detected to capture!');
+  }
+});
+
+
+  async function init() {
+    await loadModels();
+    await setupCamera();
+    startDetection();
+  }
+
+  init();
 </script>
+
+
 
 {% endblock body %}
